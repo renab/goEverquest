@@ -1,0 +1,74 @@
+package everquest
+
+import (
+	"encoding/csv"
+	"fmt"
+	"io"
+	"log"
+	"os"
+	"strconv"
+)
+
+// Raid contains all members of a raid dump
+type Raid struct {
+	Members []RaidMember
+}
+
+// RaidMember is a struct containing all raid dump info
+type RaidMember struct {
+	Group  int    // group number
+	Player string // player number
+	Level  int    // player level
+	Class  string // player class
+	Role   string // raid role - group leader, raid leader
+	Unk1   string // unknown
+	Unk2   string // unknown
+	Unk3   string // "Yes"??????
+}
+
+// LoadFromPath takes a standard everquest raid dump and loads it into a struct
+func (raid *Raid) LoadFromPath(path string) {
+	// Open the file
+	tsvfile, err := os.Open(path)
+	if err != nil {
+		log.Fatalln("Couldn't open the tsv file", err)
+	}
+
+	// Parse the file
+	r := csv.NewReader(tsvfile)
+	r.Comma = '\t'
+	//r := csv.NewReader(bufio.NewReader(csvfile))
+
+	// Iterate through the records
+	for {
+		// Read each record from csv
+		record, err := r.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			log.Fatal(err)
+		}
+		group, err := strconv.Atoi(record[0])
+		if err != nil {
+			fmt.Printf("Error converting group to int - Level: %s Name: %s\n", record[0], record[1])
+			continue
+		}
+		level, err := strconv.Atoi(record[2])
+		if err != nil {
+			fmt.Printf("Error converting level to int - Level: %s Name: %s\n", record[0], record[1])
+			continue
+		}
+		raidMember := RaidMember{
+			Group:  group,
+			Player: record[1],
+			Level:  level,
+			Class:  record[3],
+			Role:   record[4],
+			Unk1:   record[5],
+			Unk2:   record[6],
+			Unk3:   record[7],
+		}
+		raid.Members = append(raid.Members, raidMember)
+	}
+}
