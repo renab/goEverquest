@@ -17,7 +17,7 @@ type LogHandler interface {
 	ProcessLog(*EqLog)
 }
 
-func BufferedRead(path string, fromStart bool, pollRate int, handler LogHandler) {
+func BufferedLogRead(path string, fromStart bool, pollRate int, handler LogHandler) {
 	file, err := os.Open(path)
 	if err != nil {
 		fmt.Printf("error opening buffered file: %v", err)
