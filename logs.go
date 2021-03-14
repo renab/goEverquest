@@ -11,13 +11,13 @@ import (
 	"time"
 )
 
-const EQBaseLogLine = "\\[(\\w{3} \\w{3} \\d{2} \\d{2}:\\d{2}:\\d{2} \\d{4})] (.+)"
-
-type LogHandler interface {
-	ProcessLog(*EqLog)
+type LogAlert interface {
+	Check(string) // If Regex string input matches, then act
 }
 
-func BufferedLogRead(path string, fromStart bool, pollRate int, handler LogHandler) {
+const EQBaseLogLine = "\\[(\\w{3} \\w{3} \\d{2} \\d{2}:\\d{2}:\\d{2} \\d{4})] (.+)"
+
+func BufferedLogRead(path string, fromStart bool, pollRate int, out chan EqLog) {
 	file, err := os.Open(path)
 	if err != nil {
 		fmt.Printf("error opening buffered file: %v", err)
@@ -44,7 +44,7 @@ func BufferedLogRead(path string, fromStart bool, pollRate int, handler LogHandl
 			time.Sleep(3 * time.Second)
 		} else {
 			log := readLogLine(results)
-			handler.ProcessLog(log)
+			out <- *log
 		}
 	}
 }

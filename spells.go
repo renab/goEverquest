@@ -9,6 +9,9 @@ import (
 	"strconv"
 )
 
+// /outputfile Spellbook defaults to base eq folder Charactername_server-Spellbook.txt
+// we should pull spellbook when we see it was dumped
+
 // Spellbook contains a slice of all known spells
 type Spellbook struct {
 	Spells []Spell

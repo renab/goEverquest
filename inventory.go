@@ -9,6 +9,9 @@ import (
 	"strconv"
 )
 
+// /outputfile Inventory defaults to base eq folder Charactername_server-Inventory.txt
+// We should pull inventory when log see's it was dumped
+
 // Inventory defines the equippable portion of a players inventory
 type Inventory struct {
 	Charm          int
