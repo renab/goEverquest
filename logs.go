@@ -113,3 +113,9 @@ func getSource(msg string) string {
 	m := strings.Split(msg, " ")
 	return m[0]
 }
+
+func getLogPath(player, server, basePath string) string {
+	server = strings.ToLower(server) // servernames are lowercase
+	player = strings.ToTitle(player) // first letter of player is uppercase
+	return basePath + "\\eqlog_" + player + "_" + server + ".txt"
+}
