@@ -103,8 +103,15 @@ func getChannel(msg string) string {
 	}
 	if len(m) > 1 && m[1] == "tells" {
 		// return m[3]
-		return m[0]
+		return "tell"
+		// return m[0] // source should show the player not the channel
 		// return strings.TrimRight(m[3], ",")
+	}
+	if len(m) > 1 && m[1] == "auctions" {
+		return "auction"
+	}
+	if len(m) > 1 && m[1] == "says" {
+		return "say"
 	}
 	return "system"
 }
