@@ -125,3 +125,21 @@ func (guild *Guild) LoadFromPath(path string) {
 		guild.Members = append(guild.Members, guildMember)
 	}
 }
+
+func NewGuildMembers(master, new Guild) []GuildMember {
+	masterList := make(map[string]interface{}, len(master.Members))
+	var results []GuildMember
+	for _, masterMember := range master.Members {
+		masterList[masterMember.Name] = nil
+	}
+	for _, newMember := range new.Members {
+		if _, ok := masterList[newMember.Name]; ok {
+			results = append(results, newMember)
+		}
+	}
+	return results
+}
+
+func MissingGuildMembers(master, new Guild) []GuildMember {
+	return NewGuildMembers(new, master)
+}
