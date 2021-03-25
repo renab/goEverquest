@@ -89,3 +89,21 @@ func getRecentRaidDump(path string) string {
 	}
 	return files[len(files)-1] // return last file - should be latest
 }
+
+func NewRaidMembers(master, new Raid) []RaidMember {
+	masterList := make(map[string]interface{}, len(master.Members))
+	var results []RaidMember
+	for _, masterMember := range master.Members {
+		masterList[masterMember.Player] = nil
+	}
+	for _, newMember := range new.Members {
+		if _, ok := masterList[newMember.Player]; ok {
+			results = append(results, newMember)
+		}
+	}
+	return results
+}
+
+func MissingRaidMembers(master, new Raid) []RaidMember {
+	return NewRaidMembers(new, master)
+}

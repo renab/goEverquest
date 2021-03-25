@@ -48,7 +48,7 @@ type GuildMember struct {
 	PersonalNote2       string    // Probably Personal Note again
 }
 
-// LoadFromPath takes a standard everquest raid dump and loads it into a struct
+// LoadFromPath takes a standard everquest guild dump and loads it into a struct
 func (guild *Guild) LoadFromPath(path string) {
 	// Open the file
 	tsvfile, err := os.Open(path)
@@ -59,7 +59,6 @@ func (guild *Guild) LoadFromPath(path string) {
 	// Parse the file
 	r := csv.NewReader(tsvfile)
 	r.Comma = '\t'
-	//r := csv.NewReader(bufio.NewReader(csvfile))
 
 	// Iterate through the records
 	for {
