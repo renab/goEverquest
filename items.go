@@ -99,8 +99,8 @@ func (db *ItemDB) Download(filepath, url string) error {
 		err = db.decompress(file.Name(), filepath)
 		return err
 	}
-	return errors.New("ItemDB already exists, skipping download")
-}
+	log.Printf("ItemDB already exists, skipping download\n")
+	return nil
 
 func (db *ItemDB) decompress(in, out string) error {
 	// Open the gzip file.
