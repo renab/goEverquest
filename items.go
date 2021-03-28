@@ -3,7 +3,6 @@ package everquest
 import (
 	"bufio"
 	"compress/gzip"
-	"errors"
 	"io"
 	"io/ioutil"
 	"log"
@@ -101,6 +100,7 @@ func (db *ItemDB) Download(filepath, url string) error {
 	}
 	log.Printf("ItemDB already exists, skipping download\n")
 	return nil
+}
 
 func (db *ItemDB) decompress(in, out string) error {
 	// Open the gzip file.
