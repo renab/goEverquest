@@ -3,6 +3,7 @@ package everquest
 import (
 	"bufio"
 	"compress/gzip"
+	"errors"
 	"io"
 	"io/ioutil"
 	"log"
@@ -77,25 +78,28 @@ func (db *ItemDB) GetItemByID(id int) Item {
 }
 
 // DownloadFile will download a itemdb given the url to the gz file and decompress it
+// Expecting http://items.sodeq.org/downloads/items.txt.gz style db
 func (db *ItemDB) Download(filepath, url string) error {
+	if _, err := os.Stat(filepath); os.IsNotExist(err) {
+		// Get the data
+		resp, err := http.Get(url)
+		if err != nil {
+			return err
+		}
+		defer resp.Body.Close()
 
-	// Get the data
-	resp, err := http.Get(url)
-	if err != nil {
+		file, err := ioutil.TempFile("", "items.*.gz")
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer os.Remove(file.Name())
+
+		// Write the body to file
+		_, err = io.Copy(file, resp.Body)
+		err = db.decompress(file.Name(), filepath)
 		return err
 	}
-	defer resp.Body.Close()
-
-	file, err := ioutil.TempFile("temp", "items.*.gz")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer os.Remove(file.Name())
-
-	// Write the body to file
-	_, err = io.Copy(file, resp.Body)
-	err = db.decompress(file.Name(), filepath)
-	return err
+	return errors.New("ItemDB already exists, skipping download")
 }
 
 func (db *ItemDB) decompress(in, out string) error {
