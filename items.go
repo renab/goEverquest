@@ -60,7 +60,8 @@ func (db *ItemDB) LoadFromFile(file string) {
 
 // FindIDByName does an item lookup by the item name, returns -1 if not found
 func (db *ItemDB) FindIDByName(name string) int {
-	if val, ok := db.names[name]; ok {
+	lower := strings.ToLower(name)
+	if val, ok := db.names[lower]; ok {
 		return val
 	}
 	return -1
