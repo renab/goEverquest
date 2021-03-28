@@ -125,6 +125,24 @@ func (guild *Guild) LoadFromPath(path string) {
 	}
 }
 
+func (member *GuildMember) HasRank(ranks []string) bool {
+	for _, rank := range ranks {
+		if rank == member.Rank {
+			return true
+		}
+	}
+	return false
+}
+
+func (member *GuildMember) IsClass(classes []string) bool {
+	for _, class := range classes {
+		if class == member.Class {
+			return true
+		}
+	}
+	return false
+}
+
 func NewGuildMembers(master, new Guild) []GuildMember {
 	masterList := make(map[string]interface{}, len(master.Members))
 	var results []GuildMember
@@ -141,4 +159,15 @@ func NewGuildMembers(master, new Guild) []GuildMember {
 
 func MissingGuildMembers(master, new Guild) []GuildMember {
 	return NewGuildMembers(new, master)
+}
+
+// GetClassCount will return from a guild dump all the members that meet the requested class/level/online/alt/rank requirements specified
+func GetClassCount(guild Guild, minLevel int, onlineAfter time.Time, includeAlts bool, ranks []string, classes []string) []GuildMember {
+	var results []GuildMember
+	for _, mem := range guild.Members {
+		if mem.Level >= minLevel && mem.LastOnline.After(onlineAfter) && ((includeAlts && mem.Alt) || !mem.Alt) && mem.HasRank(ranks) && mem.IsClass(classes) {
+			results = append(results, mem)
+		}
+	}
+	return results
 }
