@@ -67,6 +67,14 @@ func (db *ItemDB) FindIDByName(name string) int {
 	return -1
 }
 
+// GetItemByID returns an item given its ID, returns an empty struct if not found
+func (db *ItemDB) GetItemByID(id int) Item {
+	if val, ok := db.items[id]; ok {
+		return val
+	}
+	return Item{}
+}
+
 // DownloadFile will download a itemdb given the url to the gz file and decompress it
 func (db *ItemDB) Download(filepath, url string) error {
 
