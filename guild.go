@@ -98,10 +98,14 @@ func (guild *Guild) LoadFromPath(path string) {
 			log.Printf("Error converting donations to int - Donation: %s Name: %s\n", record[11], record[0])
 			continue
 		}
-		lastDonation, err := time.Parse(format, record[12])
-		if err != nil {
-			log.Printf("Error converting last_donation to time - Time: %s\n", record[12])
-			continue
+		var lastDonation time.Time
+		if record[12] != "" {
+			lastDonation, err = time.Parse(format, record[12])
+			if err != nil {
+				log.Printf("Error converting last_donation to time - Time: %s\n", record[12])
+				continue
+
+			}
 		}
 
 		guildMember := GuildMember{
