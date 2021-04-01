@@ -175,3 +175,13 @@ func GetClassCount(guild Guild, minLevel int, onlineAfter time.Time, includeAlts
 	}
 	return results
 }
+
+func (guild *Guild) GetMemberByName(name string) GuildMember {
+	for _, member := range guild.Members {
+		if member.Name == name {
+			return member
+		}
+	}
+	log.Printf("Could not find member with name: %s", name)
+	return GuildMember{}
+}
