@@ -98,8 +98,6 @@ func getChannel(msg string) string {
 		if m[1] == "tells" && m[2] == "you," {
 			return "tell"
 		}
-		// fmt.Printf("Default: %s\n", m[2])
-		return "system"
 	}
 	if len(m) > 1 && m[1] == "tells" {
 		// return m[3]
