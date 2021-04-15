@@ -185,3 +185,7 @@ func (guild *Guild) GetMemberByName(name string) GuildMember {
 	log.Printf("Could not find member with name: %s", name)
 	return GuildMember{}
 }
+
+func (guild *Guild) WriteToPath(path string) {
+
+}
