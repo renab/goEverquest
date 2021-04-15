@@ -1702,9 +1702,11 @@ func (s Spell) GetClasses() []string {
 	classLevels := strings.Split(s.Classes, " ")
 	var classes []string
 	for _, class := range classLevels {
-		fullClass := ShortClassNameToFull(class[:3])
-		if fullClass != "Unknown" {
-			classes = append(classes, fullClass)
+		if len(class) >= 3 {
+			fullClass := ShortClassNameToFull(class[:3])
+			if fullClass != "Unknown" {
+				classes = append(classes, fullClass)
+			}
 		}
 	}
 	return classes
