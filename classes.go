@@ -51,3 +51,42 @@ func GetClassesByRole(role string) []string {
 	}
 	return []string{}
 }
+
+func ShortClassNameToFull(sName string) string {
+	switch sName {
+	case "BRD":
+		return "Bard"
+	case "BST":
+		return "Beastlord"
+	case "BER":
+		return "Berserker"
+	case "CLR":
+		return "Cleric"
+	case "DRU":
+		return "Druid"
+	case "ENC":
+		return "Enchanter"
+	case "MAG":
+		return "Magician"
+	case "MNK":
+		return "Monk"
+	case "NEC":
+		return "Necromancer"
+	case "PAL":
+		return "Paladin"
+	case "RNG":
+		return "Ranger"
+	case "ROG":
+		return "Rogue"
+	case "SHD":
+		return "Shadow Knight"
+	case "SHM":
+		return "Shaman"
+	case "WAR":
+		return "Warrior"
+	case "WIZ":
+		return "Wizard"
+	default:
+		return "Unknown"
+	}
+}

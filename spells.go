@@ -1697,3 +1697,15 @@ func (db *SpellDB) SearchSpellsByName(name string) []Spell {
 	}
 	return results
 }
+
+func GetSpellClasses(s Spell) []string {
+	classLevels := strings.Split(s.Classes, " ")
+	var classes []string
+	for _, class := range classLevels {
+		fullClass := ShortClassNameToFull(class[:3])
+		if fullClass != "Unknown" {
+			classes = append(classes, fullClass)
+		}
+	}
+	return classes
+}
