@@ -1657,6 +1657,10 @@ func (db *SpellDB) LoadFromFile(file string) {
 			log.Printf("Item line too long!\n")
 		}
 		record := strings.Split(string(line), `,`)
+		for i, r := range record {
+			// Remove parenthesis
+			record[i] = strings.ReplaceAll(r, "\"", "")
+		}
 		var spell Spell
 		spell.Load(record...)
 		db.byID[spell.Id] = spell
