@@ -1656,7 +1656,7 @@ func (db *SpellDB) LoadFromFile(file string) {
 		if tooLong {
 			log.Printf("Item line too long!\n")
 		}
-		record := strings.Split(string(line), `|`)
+		record := strings.Split(string(line), `,`)
 		var spell Spell
 		spell.Load(record...)
 		db.byID[spell.Id] = spell
