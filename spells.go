@@ -1698,7 +1698,7 @@ func (db *SpellDB) SearchSpellsByName(name string) []Spell {
 	return results
 }
 
-func GetSpellClasses(s Spell) []string {
+func (s Spell) GetClasses() []string {
 	classLevels := strings.Split(s.Classes, " ")
 	var classes []string
 	for _, class := range classLevels {
