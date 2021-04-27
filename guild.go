@@ -1,7 +1,9 @@
 package everquest
 
 import (
+	"bufio"
 	"encoding/csv"
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -49,7 +51,7 @@ type GuildMember struct {
 }
 
 // LoadFromPath takes a standard everquest guild dump and loads it into a struct
-func (guild *Guild) LoadFromPath(path string) {
+func (guild *Guild) LoadFromPath(log *log.Logger, path string) {
 	// Open the file
 	tsvfile, err := os.Open(path)
 	if err != nil {
@@ -154,7 +156,7 @@ func NewGuildMembers(master, new Guild) []GuildMember {
 		masterList[masterMember.Name] = nil
 	}
 	for _, newMember := range new.Members {
-		if _, ok := masterList[newMember.Name]; ok {
+		if _, ok := masterList[newMember.Name]; !ok {
 			results = append(results, newMember)
 		}
 	}
@@ -163,6 +165,24 @@ func NewGuildMembers(master, new Guild) []GuildMember {
 
 func MissingGuildMembers(master, new Guild) []GuildMember {
 	return NewGuildMembers(new, master)
+}
+
+func MergeGuilds(master, new Guild) Guild {
+	uniqueGuild := make(map[string]GuildMember)
+	for _, mMember := range master.Members {
+		uniqueGuild[mMember.Name] = mMember
+	}
+	for _, nMember := range new.Members {
+		uniqueGuild[nMember.Name] = nMember
+	}
+	// Convert to Guild
+	var newGuild Guild
+	var newMembers []GuildMember
+	for _, fMember := range uniqueGuild {
+		newMembers = append(newMembers, fMember)
+	}
+	newGuild.Members = newMembers
+	return newGuild
 }
 
 // GetClassCount will return from a guild dump all the members that meet the requested class/level/online/alt/rank requirements specified
@@ -176,7 +196,7 @@ func GetClassCount(guild Guild, minLevel int, onlineAfter time.Time, includeAlts
 	return results
 }
 
-func (guild *Guild) GetMemberByName(name string) GuildMember {
+func (guild *Guild) GetMemberByName(log *log.Logger, name string) GuildMember {
 	for _, member := range guild.Members {
 		if member.Name == name {
 			return member
@@ -186,6 +206,39 @@ func (guild *Guild) GetMemberByName(name string) GuildMember {
 	return GuildMember{}
 }
 
-func (guild *Guild) WriteToPath(path string) {
+func (guild *Guild) WriteToPath(log *log.Logger, path string) {
+	file, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 
+	if err != nil {
+		log.Fatalf("failed creating file: %s", err)
+	}
+
+	datawriter := bufio.NewWriter(file)
+
+	for _, member := range guild.Members {
+		var isAlt string
+		if member.Alt {
+			isAlt = "A"
+		}
+		lastOn := member.LastOnline.Format("01/02/06")
+		var tributeStatus string
+		if member.TributeStatus {
+			tributeStatus = "on"
+		} else {
+			tributeStatus = "off"
+		}
+		var trophyTributeStatus string
+		if member.TrophyTributeStatus {
+			trophyTributeStatus = "on"
+		} else {
+			trophyTributeStatus = "off"
+		}
+		lastDonation := member.LastDonation.Format("01/02/06")
+		line := fmt.Sprintf("%s\t%d\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%d\t%s\t%s\t%s\t", member.Name, member.Level, member.Class, member.Rank, isAlt, lastOn, member.Zone, member.PublicNote, member.PersonalNote, tributeStatus, trophyTributeStatus, member.Donations, lastDonation, member.PersonalNote2, member.PersonalNote2)
+		_, err = datawriter.WriteString(line + "\n")
+		log.Printf("Error writing guild: %s", err.Error())
+	}
+
+	datawriter.Flush()
+	file.Close()
 }
