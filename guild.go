@@ -234,9 +234,11 @@ func (guild *Guild) WriteToPath(log *log.Logger, path string) {
 			trophyTributeStatus = "off"
 		}
 		lastDonation := member.LastDonation.Format("01/02/06")
-		line := fmt.Sprintf("%s\t%d\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%d\t%s\t%s\t%s\t", member.Name, member.Level, member.Class, member.Rank, isAlt, lastOn, member.Zone, member.PublicNote, member.PersonalNote, tributeStatus, trophyTributeStatus, member.Donations, lastDonation, member.PersonalNote2, member.PersonalNote2)
+		line := fmt.Sprintf("%s\t%d\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%d\t%s\t%s\t%s", member.Name, member.Level, member.Class, member.Rank, isAlt, lastOn, member.Zone, member.PublicNote, member.PersonalNote, tributeStatus, trophyTributeStatus, member.Donations, lastDonation, member.PublicNote2, member.PersonalNote2)
 		_, err = datawriter.WriteString(line + "\n")
-		log.Printf("Error writing guild: %s", err.Error())
+		if err != nil {
+			log.Printf("Error writing guild: %s", err.Error())
+		}
 	}
 
 	datawriter.Flush()
