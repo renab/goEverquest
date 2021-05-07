@@ -2,6 +2,7 @@ package everquest
 
 import (
 	"bufio"
+	"encoding/csv"
 	"io"
 	"log"
 	"os"
@@ -1625,49 +1626,70 @@ type SpellDB struct {
 	byName map[string]int // Used to fast lookup ID by name (there may be duplicates, and is not recommended)
 }
 
-func (db *SpellDB) LoadFromFile(file string) {
+func (db *SpellDB) LoadFromFile(file string, log *log.Logger) int {
 	db.byID = make(map[int]Spell)
 	db.byName = make(map[string]int)
 	psvfile, err := os.Open(file)
 	if err != nil {
-		log.Fatalln("Couldn't open the psv file", err)
+		log.Fatalln("Couldn't open the csv file", err)
 	}
 	defer psvfile.Close()
 
-	r := bufio.NewReader(psvfile)
+	// r := bufio.NewReader(psvfile)
+	r := csv.NewReader(bufio.NewReader(psvfile))
+	r.LazyQuotes = true
 
 	// Iterate through the records
 	headerSkipped := false
 	var spellCount int
+	// Iterate through the records
 	for {
-		// Read each record from csv
-		line, tooLong, err := r.ReadLine()
-		if !headerSkipped {
-			headerSkipped = true
-			// skip header line
+		spellCount++
+		if headerSkipped && spellCount == 1 {
 			continue
 		}
+		// Read each record from csv
+		record, err := r.Read()
 		if err == io.EOF {
 			break
 		}
 		if err != nil {
 			log.Fatal(err)
 		}
-		if tooLong {
-			log.Printf("Item line too long!\n")
-		}
-		record := strings.Split(string(line), `,`)
-		for i, r := range record {
-			// Remove parenthesis
-			record[i] = strings.ReplaceAll(r, "\"", "")
-		}
 		var spell Spell
 		spell.Load(record...)
 		db.byID[spell.Id] = spell
 		db.byName[strings.ToLower(spell.Name)] = spell.Id
-		spellCount++
 	}
-	log.Printf("Loaded %d spells\n", spellCount)
+	// for {
+	// 	// Read each record from csv
+	// 	line, tooLong, err := r.ReadLine()
+	// 	if !headerSkipped {
+	// 		headerSkipped = true
+	// 		// skip header line
+	// 		continue
+	// 	}
+	// 	if err == io.EOF {
+	// 		break
+	// 	}
+	// 	if err != nil {
+	// 		log.Fatal(err)
+	// 	}
+	// 	if tooLong {
+	// 		log.Printf("Item line too long!\n")
+	// 	}
+	// 	record := strings.Split(string(line), `,`)
+	// 	for i, r := range record {
+	// 		// Remove parenthesis
+	// 		record[i] = strings.ReplaceAll(r, "\"", "")
+	// 	}
+	// 	var spell Spell
+	// 	spell.Load(record...)
+	// 	db.byID[spell.Id] = spell
+	// 	db.byName[strings.ToLower(spell.Name)] = spell.Id
+	// 	spellCount++
+	// }
+	return spellCount
 }
 
 // FindIDByName does an spell lookup by the spell name, returns -1 if not found
