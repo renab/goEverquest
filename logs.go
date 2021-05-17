@@ -17,7 +17,7 @@ type LogAlert interface {
 
 const EQBaseLogLine = "\\[(\\w{3} \\w{3} \\d{2} \\d{2}:\\d{2}:\\d{2} \\d{4})] (.+)"
 
-func BufferedLogRead(path string, fromStart bool, pollRate int, out chan EqLog) {
+func BufferedLogRead(path string, fromStart bool, pollRate int, out chan EqLog, quit chan bool) {
 	file, err := os.Open(path)
 	if err != nil {
 		fmt.Printf("error opening buffered file: %v", err)
@@ -45,6 +45,10 @@ func BufferedLogRead(path string, fromStart bool, pollRate int, out chan EqLog) 
 		} else {
 			log := readLogLine(results)
 			out <- *log
+		}
+		select {
+		case <-quit: // if someone sends true to the quit channel, exit the goroutine
+			return
 		}
 	}
 }
@@ -122,5 +126,5 @@ func getSource(msg string) string {
 func GetLogPath(player, server, basePath string) string {
 	server = strings.ToLower(server) // servernames are lowercase
 	player = strings.Title(player)   // first letter of player is uppercase
-	return basePath + "\\Logs\\eqlog_" + player + "_" + server + ".txt"
+	return basePath + "/Logs/eqlog_" + player + "_" + server + ".txt"
 }
