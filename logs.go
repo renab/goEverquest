@@ -104,9 +104,11 @@ func getChannel(msg string) string {
 			return "tell"
 		}
 	}
-	if len(m) > 1 && m[1] == "tells" {
+	if len(m) > 2 && m[1] == "tells" && strings.Contains(m[2], ":") { // channel message
 		// return m[3]
-		return "tell"
+		colLoc := strings.Index(m[2], ":")
+		return m[2][:colLoc]
+		// return "tell"
 		// return m[0] // source should show the player not the channel
 		// return strings.TrimRight(m[3], ",")
 	}
