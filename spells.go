@@ -1720,7 +1720,7 @@ func (db *SpellDB) SearchSpellsByName(name string) []Spell {
 	return results
 }
 
-func (s Spell) GetClasses() []string {
+func (s *Spell) GetClasses() []string {
 	classLevels := strings.Split(s.Classes, " ")
 	var classes []string
 	for _, class := range classLevels {
@@ -1732,4 +1732,24 @@ func (s Spell) GetClasses() []string {
 		}
 	}
 	return classes
+}
+
+func (s *Spell) ClassCanUse(class string) bool {
+	classes := s.GetClasses()
+	for _, usable := range classes {
+		if class == usable {
+			return true
+		}
+	}
+	return false
+}
+
+func (db *SpellDB) GetClassSpells(class string) []Spell {
+	var results []Spell
+	for _, spell := range db.byID {
+		if spell.ClassCanUse(class) {
+			results = append(results, spell)
+		}
+	}
+	return results
 }
