@@ -200,7 +200,7 @@ type Spell struct {
 	Cancelonsit                int
 	Cast_not_standing          int
 	Castinganim                int
-	Castingtime                int
+	Castingtime                float64
 	Castmsg1                   string
 	Castmsg2                   string
 	Castmsg3                   string
@@ -362,7 +362,7 @@ type Spell struct {
 	Pcnpc_only_flag            int
 	Persistdeath               int
 	Primary_category           int
-	Pushback                   int
+	Pushback                   float64
 	Pushup                     int
 	Pvp_duration               int
 	Pvp_duration_cap           int
@@ -379,7 +379,7 @@ type Spell struct {
 	Reagentid3                 int
 	Reagentid4                 int
 	Reagents                   int
-	Recasttime                 int
+	Recasttime                 float64
 	Reflectable                int
 	Resist                     string
 	Resist_cap                 int
@@ -995,8 +995,8 @@ func (s *Spell) Load(data ...string) {
 	d, _ = strconv.Atoi(data[x])
 	s.Castinganim = d
 	x++
-	d, _ = strconv.Atoi(data[x])
-	s.Castingtime = d
+	flt, _ := strconv.ParseFloat(data[x], 64)
+	s.Castingtime = flt
 	x++
 	s.Castmsg1 = data[x]
 	x++
@@ -1431,8 +1431,8 @@ func (s *Spell) Load(data ...string) {
 	d, _ = strconv.Atoi(data[x])
 	s.Primary_category = d
 	x++
-	d, _ = strconv.Atoi(data[x])
-	s.Pushback = d
+	flt, _ = strconv.ParseFloat(data[x], 64)
+	s.Pushback = flt
 	x++
 	d, _ = strconv.Atoi(data[x])
 	s.Pushup = d
@@ -1482,8 +1482,8 @@ func (s *Spell) Load(data ...string) {
 	d, _ = strconv.Atoi(data[x])
 	s.Reagents = d
 	x++
-	d, _ = strconv.Atoi(data[x])
-	s.Recasttime = d
+	flt, _ = strconv.ParseFloat(data[x], 64)
+	s.Recasttime = flt
 	x++
 	d, _ = strconv.Atoi(data[x])
 	s.Reflectable = d
