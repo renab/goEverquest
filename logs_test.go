@@ -1,6 +1,10 @@
 package everquest
 
-import "testing"
+import (
+	"regexp"
+	"testing"
+	"time"
+)
 
 func TestGetChannel(t *testing.T) {
 	chanMSG := `Ravnor tells Von_parses:5, 'Lord Vyemm in 485s, 249k AH | Kaijin 22042 AH | Voltha 18485 AH | Patchouli 17664 AH | Silvaefar 17092 AH | Bunzz 17062 AH | Milliardo 15491 AH | Scylla 14543 AH | Vinadru 13840 AH | Porrt 13074 AH | Blossom 12927 AH | Impulse 12661 AH | Clearwater 10482 AH | Stony 9390 AH | Sacristan 8511 AH | Banis 7346 AH'`
@@ -35,5 +39,51 @@ func TestGetChannel(t *testing.T) {
 	}
 	if getChannel(chanMSG) != "Von_parses" {
 		t.Fatalf("Error reading Von_parses channel\n%s\nshows as\n%s", chanMSG, getChannel(chanMSG))
+	}
+}
+
+func TestReadLogLine(t *testing.T) {
+	testLog := `[Sat Jan 02 20:44:08 2021] Destrod tells the guild, 'takings bids on Shawl of Perception pst bids close in 2mins'`
+	r, _ := regexp.Compile(EQBaseLogLine)
+	results := r.FindAllStringSubmatch(testLog, -1)
+	eqlog := readLogLine(results)
+	testTime := time.Date(2021, time.January, 2, 20, 44, 8, 0, time.Local)
+	if eqlog.Channel != "guild" {
+		t.Fatalf("Error parsing channel")
+	}
+	if eqlog.Msg != "Destrod tells the guild, 'takings bids on Shawl of Perception pst bids close in 2mins'" {
+		t.Fatalf("Error parsing msg")
+	}
+	if eqlog.Source != "Destrod" {
+		t.Fatalf("Error parsing source")
+	}
+	if !eqlog.T.Equal(testTime) {
+		t.Fatalf("Error parsing time")
+	}
+}
+
+func TestEQTimeConv(t *testing.T) {
+	testTime := "Sat May 23 20:44:08 2021"
+	conv := eqTimeConv(testTime)
+	passTime := time.Date(2021, time.May, 23, 20, 44, 8, 0, time.Local)
+	if !conv.Equal(passTime) {
+		t.Fatalf("Error parsing eq time to time.Time: %s vs %s", conv.String(), passTime.String())
+	}
+}
+
+func TestGetSource(t *testing.T) {
+	testMSG := "Destrod tells the guild, 'takings bids on Shawl of Perception pst bids close in 2mins'"
+	if getSource(testMSG) != "Destrod" {
+		t.Fatalf("Error getting message source\n")
+	}
+}
+
+func TestGetLogPath(t *testing.T) {
+	player := "Mortimus"
+	server := "aradune"
+	basePath := "C:/Everquest"
+	success := "C:/Everquest/Logs/eqlog_Mortimus_aradune.txt"
+	if GetLogPath(player, server, basePath) != success {
+		t.Fatalf("Error getting log path of player")
 	}
 }

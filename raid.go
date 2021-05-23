@@ -2,8 +2,9 @@ package everquest
 
 import (
 	"encoding/csv"
-	"fmt"
+	"errors"
 	"io"
+	"io/fs"
 	"log"
 	"os"
 	"path/filepath"
@@ -29,11 +30,12 @@ type RaidMember struct {
 }
 
 // LoadFromPath takes a standard everquest raid dump and loads it into a struct
-func (raid *Raid) LoadFromPath(path string) {
+func (raid *Raid) LoadFromPath(path string, Err *log.Logger) error {
 	// Open the file
 	tsvfile, err := os.Open(path)
 	if err != nil {
-		log.Fatalln("Couldn't open the tsv file", err)
+		Err.Printf("Error reading tsv file at %s\n", path)
+		return err
 	}
 
 	// Parse the file
@@ -49,16 +51,16 @@ func (raid *Raid) LoadFromPath(path string) {
 			break
 		}
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		group, err := strconv.Atoi(record[0])
 		if err != nil {
-			fmt.Printf("Error converting group to int - Level: %s Name: %s\n", record[0], record[1])
+			Err.Printf("Error converting group to int - Level: %s Name: %s\n", record[0], record[1])
 			continue
 		}
 		level, err := strconv.Atoi(record[2])
 		if err != nil {
-			fmt.Printf("Error converting level to int - Level: %s Name: %s\n", record[0], record[1])
+			Err.Printf("Error converting level to int - Level: %s Name: %s\n", record[0], record[1])
 			continue
 		}
 		raidMember := RaidMember{
@@ -73,21 +75,25 @@ func (raid *Raid) LoadFromPath(path string) {
 		}
 		raid.Members = append(raid.Members, raidMember)
 	}
+	return nil
 }
 
-func getRecentRaidDump(path string) string {
+func GetRecentRaidDump(path string) (string, error) {
 	var files []string
 
-	err := filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
-		if strings.HasPrefix(filepath.Base(path), "RaidRoster") {
-			files = append(files, filepath.Base(path))
+	err := filepath.WalkDir(path, func(path string, d fs.DirEntry, err error) error {
+		if strings.HasPrefix(d.Name(), "RaidRoster") {
+			files = append(files, d.Name())
 		}
 		return nil
 	})
 	if err != nil {
-		panic(err)
+		return "", err
 	}
-	return files[len(files)-1] // return last file - should be latest
+	if len(files) <= 0 {
+		return "", errors.New("cannot find a recent raid dump")
+	}
+	return files[len(files)-1], nil // return last file - should be latest
 }
 
 func NewRaidMembers(master, new Raid) []RaidMember {

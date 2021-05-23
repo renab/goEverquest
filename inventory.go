@@ -2,7 +2,6 @@ package everquest
 
 import (
 	"encoding/csv"
-	"fmt"
 	"io"
 	"log"
 	"os"
@@ -69,11 +68,11 @@ type Inventory struct {
 }
 
 // LoadFromPath loads a player inventory from the standard eq export format for inventory
-func (p *Inventory) LoadFromPath(path string) {
+func (p *Inventory) LoadFromPath(path string, Err *log.Logger) error {
 	// Open the file
 	csvfile, err := os.Open(path)
 	if err != nil {
-		log.Fatalln("Couldn't open the tsv file", err)
+		return err
 	}
 
 	// Parse the file
@@ -98,14 +97,14 @@ func (p *Inventory) LoadFromPath(path string) {
 			break
 		}
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		if record[0] == "Location" && i == 1 { // Header Row
 			continue
 		}
 		item, err := strconv.Atoi(record[2])
 		if err != nil {
-			fmt.Printf("Error converting item to int - Item: %s ID: %s\n", record[1], record[2])
+			Err.Printf("Error converting item to int - Item: %s ID: %s\n", record[1], record[2])
 			continue
 		}
 		switch record[0] {
@@ -237,4 +236,5 @@ func (p *Inventory) LoadFromPath(path string) {
 		}
 		// fmt.Printf("Location: %s Name: %s ID: %s Count: %s Slots: %s\n", record[0], record[1], record[2], record[3], record[4])
 	}
+	return nil
 }

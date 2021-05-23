@@ -3,6 +3,7 @@ package everquest
 import (
 	"bufio"
 	"encoding/csv"
+	"errors"
 	"io"
 	"log"
 	"os"
@@ -1626,12 +1627,12 @@ type SpellDB struct {
 	byName map[string]int // Used to fast lookup ID by name (there may be duplicates, and is not recommended)
 }
 
-func (db *SpellDB) LoadFromFile(file string, log *log.Logger) int {
+func (db *SpellDB) LoadFromFile(file string, Info *log.Logger) error {
 	db.byID = make(map[int]Spell)
 	db.byName = make(map[string]int)
 	psvfile, err := os.Open(file)
 	if err != nil {
-		log.Fatalln("Couldn't open the csv file", err)
+		return err
 	}
 	defer psvfile.Close()
 
@@ -1654,59 +1655,32 @@ func (db *SpellDB) LoadFromFile(file string, log *log.Logger) int {
 			break
 		}
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		var spell Spell
 		spell.Load(record...)
 		db.byID[spell.Id] = spell
 		db.byName[strings.ToLower(spell.Name)] = spell.Id
 	}
-	// for {
-	// 	// Read each record from csv
-	// 	line, tooLong, err := r.ReadLine()
-	// 	if !headerSkipped {
-	// 		headerSkipped = true
-	// 		// skip header line
-	// 		continue
-	// 	}
-	// 	if err == io.EOF {
-	// 		break
-	// 	}
-	// 	if err != nil {
-	// 		log.Fatal(err)
-	// 	}
-	// 	if tooLong {
-	// 		log.Printf("Item line too long!\n")
-	// 	}
-	// 	record := strings.Split(string(line), `,`)
-	// 	for i, r := range record {
-	// 		// Remove parenthesis
-	// 		record[i] = strings.ReplaceAll(r, "\"", "")
-	// 	}
-	// 	var spell Spell
-	// 	spell.Load(record...)
-	// 	db.byID[spell.Id] = spell
-	// 	db.byName[strings.ToLower(spell.Name)] = spell.Id
-	// 	spellCount++
-	// }
-	return spellCount
+	Info.Printf("Loaded %d spells\n", spellCount)
+	return nil
 }
 
 // FindIDByName does an spell lookup by the spell name, returns -1 if not found
-func (db *SpellDB) FindIDByName(name string) int {
+func (db *SpellDB) FindIDByName(name string) (int, error) {
 	lower := strings.ToLower(name)
 	if val, ok := db.byName[lower]; ok {
-		return val
+		return val, nil
 	}
-	return -1
+	return -1, errors.New("cannot find spell id with name: " + name)
 }
 
 // GetSpellByID returns an spell given its ID, returns an empty struct if not found
-func (db *SpellDB) GetSpellByID(id int) Spell {
+func (db *SpellDB) GetSpellByID(id int) (Spell, error) {
 	if val, ok := db.byID[id]; ok {
-		return val
+		return val, nil
 	}
-	return Spell{}
+	return Spell{}, errors.New("cannot find spell by id")
 }
 
 // SearchSpellsByName will do a long search to find spells containing the input value
@@ -1725,10 +1699,11 @@ func (s *Spell) GetClasses() []string {
 	var classes []string
 	for _, class := range classLevels {
 		if len(class) >= 3 {
-			fullClass := ShortClassNameToFull(class[:3])
-			if fullClass != "Unknown" {
-				classes = append(classes, fullClass)
+			fullClass, err := ShortClassNameToFull(class[:3])
+			if err != nil {
+				continue
 			}
+			classes = append(classes, fullClass)
 		}
 	}
 	return classes

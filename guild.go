@@ -3,8 +3,10 @@ package everquest
 import (
 	"bufio"
 	"encoding/csv"
+	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"log"
 	"os"
 	"path/filepath"
@@ -13,19 +15,22 @@ import (
 	"time"
 )
 
-func getRecentRosterDump(path string, guildName string) string {
+func GetRecentRosterDump(path string, guildName string) (string, error) {
 	var files []string
 
-	err := filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
-		if strings.HasPrefix(filepath.Base(path), guildName) {
-			files = append(files, filepath.Base(path))
+	err := filepath.WalkDir(path, func(path string, d fs.DirEntry, err error) error {
+		if strings.HasPrefix(d.Name(), guildName) {
+			files = append(files, d.Name())
 		}
 		return nil
 	})
 	if err != nil {
-		panic(err)
+		return "", err
 	}
-	return files[len(files)-1] // return last file - should be latest
+	if len(files) <= 0 {
+		return "", errors.New("cannot find a recent raid dump")
+	}
+	return files[len(files)-1], nil // return last file - should be latest
 }
 
 type Guild struct {
@@ -51,11 +56,12 @@ type GuildMember struct {
 }
 
 // LoadFromPath takes a standard everquest guild dump and loads it into a struct
-func (guild *Guild) LoadFromPath(log *log.Logger, path string) {
+func (guild *Guild) LoadFromPath(path string, Err *log.Logger) error {
 	// Open the file
 	tsvfile, err := os.Open(path)
 	if err != nil {
-		log.Fatalln("Couldn't open the tsv file", err)
+		Err.Println("Couldn't open the tsv file", err)
+		return errors.New("could not open the tsv file at " + path)
 	}
 
 	// Parse the file
@@ -74,7 +80,7 @@ func (guild *Guild) LoadFromPath(log *log.Logger, path string) {
 		}
 		level, err := strconv.Atoi(record[1])
 		if err != nil {
-			log.Printf("Error converting level to int - Level: %s Name: %s\n", record[1], record[0])
+			Err.Printf("Error converting level to int - Level: %s Name: %s\n", record[1], record[0])
 			continue
 		}
 		var alt bool
@@ -84,7 +90,7 @@ func (guild *Guild) LoadFromPath(log *log.Logger, path string) {
 		format := "01/02/06"
 		lastOnline, err := time.Parse(format, record[5])
 		if err != nil {
-			log.Printf("Error converting last_online to time - Time: %s\n", record[5])
+			Err.Printf("Error converting last_online to time - Time: %s\n", record[5])
 			continue
 		}
 		var tributeStatus bool
@@ -97,14 +103,14 @@ func (guild *Guild) LoadFromPath(log *log.Logger, path string) {
 		}
 		donations, err := strconv.Atoi(record[11])
 		if err != nil {
-			log.Printf("Error converting donations to int - Donation: %s Name: %s\n", record[11], record[0])
+			Err.Printf("Error converting donations to int - Donation: %s Name: %s\n", record[11], record[0])
 			continue
 		}
 		var lastDonation time.Time
 		if record[12] != "" {
 			lastDonation, err = time.Parse(format, record[12])
 			if err != nil {
-				log.Printf("Error converting last_donation to time - Time: %s\n", record[12])
+				Err.Printf("Error converting last_donation to time - Time: %s\n", record[12])
 				continue
 
 			}
@@ -129,6 +135,7 @@ func (guild *Guild) LoadFromPath(log *log.Logger, path string) {
 		}
 		guild.Members = append(guild.Members, guildMember)
 	}
+	return nil
 }
 
 func (member *GuildMember) HasRank(ranks []string) bool {
@@ -196,24 +203,25 @@ func GetClassCount(guild Guild, minLevel int, onlineAfter time.Time, includeAlts
 	return results
 }
 
-func (guild *Guild) GetMemberByName(log *log.Logger, name string) GuildMember {
+func (guild *Guild) GetMemberByName(name string) (GuildMember, error) {
 	for _, member := range guild.Members {
 		if member.Name == name {
-			return member
+			return member, nil
 		}
 	}
-	log.Printf("Could not find member with name: %s", name)
-	return GuildMember{}
+	return GuildMember{}, errors.New("could not find member with name: " + name)
 }
 
-func (guild *Guild) WriteToPath(log *log.Logger, path string) {
+func (guild *Guild) WriteToPath(path string) error {
 	file, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 
 	if err != nil {
-		log.Fatalf("failed creating file: %s", err)
+		return err
 	}
 
 	datawriter := bufio.NewWriter(file)
+	defer datawriter.Flush()
+	defer file.Close()
 
 	for _, member := range guild.Members {
 		var isAlt string
@@ -237,10 +245,8 @@ func (guild *Guild) WriteToPath(log *log.Logger, path string) {
 		line := fmt.Sprintf("%s\t%d\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%d\t%s\t%s\t%s", member.Name, member.Level, member.Class, member.Rank, isAlt, lastOn, member.Zone, member.PublicNote, member.PersonalNote, tributeStatus, trophyTributeStatus, member.Donations, lastDonation, member.PublicNote2, member.PersonalNote2)
 		_, err = datawriter.WriteString(line + "\n")
 		if err != nil {
-			log.Printf("Error writing guild: %s", err.Error())
+			return err
 		}
 	}
-
-	datawriter.Flush()
-	file.Close()
+	return nil
 }

@@ -2,7 +2,6 @@ package everquest
 
 import (
 	"encoding/csv"
-	"fmt"
 	"io"
 	"log"
 	"os"
@@ -61,11 +60,11 @@ type SpellBookEntry struct {
 }
 
 // LoadFromPath loads a standard everquest spell dump
-func (s *Spellbook) LoadFromPath(path string) {
+func (s *Spellbook) LoadFromPath(path string, Err *log.Logger) error {
 	// Open the file
 	tsvfile, err := os.Open(path)
 	if err != nil {
-		log.Fatalln("Couldn't open the tsv file", err)
+		return err
 	}
 
 	// Parse the file
@@ -85,7 +84,7 @@ func (s *Spellbook) LoadFromPath(path string) {
 		}
 		level, err := strconv.Atoi(record[0])
 		if err != nil {
-			fmt.Printf("Error converting level to int - Level: %s Name: %s\n", record[0], record[1])
+			Err.Printf("Error converting level to int - Level: %s Name: %s\n", record[0], record[1])
 			continue
 		}
 		spell := SpellBookEntry{
@@ -94,4 +93,5 @@ func (s *Spellbook) LoadFromPath(path string) {
 		}
 		s.Spells = append(s.Spells, spell)
 	}
+	return nil
 }

@@ -20,12 +20,12 @@ type ItemDB struct {
 	names map[string]int // Used to fast lookup ID by name (there may be duplicates, and is not recommended)
 }
 
-func (db *ItemDB) LoadFromFile(file string) {
+func (db *ItemDB) LoadFromFile(file string, Err *log.Logger, Info *log.Logger) error {
 	db.items = make(map[int]Item)
 	db.names = make(map[string]int)
 	psvfile, err := os.Open(file)
 	if err != nil {
-		log.Fatalln("Couldn't open the psv file", err)
+		return err
 	}
 	defer psvfile.Close()
 
@@ -49,7 +49,7 @@ func (db *ItemDB) LoadFromFile(file string) {
 			log.Fatal(err)
 		}
 		if tooLong {
-			log.Printf("Item line too long!\n")
+			Err.Printf("Item line too long!\n")
 		}
 		record := strings.Split(string(line), `|`)
 		var item Item
@@ -58,24 +58,25 @@ func (db *ItemDB) LoadFromFile(file string) {
 		db.names[strings.ToLower(item.Name)] = item.ID
 		itemCount++
 	}
-	log.Printf("Loaded %d items\n", itemCount)
+	Info.Printf("Loaded %d items\n", itemCount)
+	return nil
 }
 
 // FindIDByName does an item lookup by the item name, returns -1 if not found
-func (db *ItemDB) FindIDByName(name string) int {
+func (db *ItemDB) FindIDByName(name string) (int, error) {
 	lower := strings.ToLower(name)
 	if val, ok := db.names[lower]; ok {
-		return val
+		return val, nil
 	}
-	return -1
+	return -1, errors.New("cannot find item id with name: " + name)
 }
 
 // GetItemByID returns an item given its ID, returns an empty struct if not found
-func (db *ItemDB) GetItemByID(id int) Item {
+func (db *ItemDB) GetItemByID(id int) (Item, error) {
 	if val, ok := db.items[id]; ok {
-		return val
+		return val, nil
 	}
-	return Item{}
+	return Item{}, errors.New("cannot find item with provided id")
 }
 
 // SearchItemsByName will do a long search to find items containing the input value
@@ -101,11 +102,11 @@ func (db *ItemDB) RenameByID(id int, name string) error {
 
 // RenameByName renames an item given its old item name
 func (db *ItemDB) RenameByName(old, new string) error {
-	item := db.FindIDByName(old)
-	if item == -1 {
-		return errors.New("Cannot rename item we can't find")
+	item, err := db.FindIDByName(old)
+	if err != nil {
+		return err
 	}
-	err := db.RenameByID(item, new)
+	err = db.RenameByID(item, new)
 	return err
 }
 
@@ -122,20 +123,22 @@ func (db *ItemDB) Download(filepath, url string) error {
 
 		file, err := ioutil.TempFile("", "items.*.gz")
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		defer os.Remove(file.Name())
 
 		// Write the body to file
 		_, err = io.Copy(file, resp.Body)
+		if err != nil {
+			return err
+		}
 		err = db.decompress(file.Name(), filepath)
 		return err
 	}
-	log.Printf("ItemDB already exists, skipping download\n")
 	return nil
 }
 
-func (db *ItemDB) decompress(in, out string) error {
+func (db *ItemDB) decompress(in, out string) error { // TODO: make this function less panicy
 	// Open the gzip file.
 	f, _ := os.Open(in)
 	// close f on exit and check for its returned error
@@ -151,7 +154,7 @@ func (db *ItemDB) decompress(in, out string) error {
 	// open output file
 	fo, err := os.Create(out)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	// close fo on exit and check for its returned error
 	defer func() {
@@ -188,7 +191,7 @@ func (db *ItemDB) decompress(in, out string) error {
 // WriteToFile is for outputting the item db to a flat file
 func (db *ItemDB) WriteToFile(out string) error {
 	const header = "itemclass|name|lore|idfile|idfileextra|id|weight|norent|nodrop|attunable|size|slots|price|icon|benefitflag|tradeskills|cr|dr|pr|mr|fr|svcorruption|astr|asta|aagi|adex|acha|aint|awis|hp|mana|endurance|ac|regen|manaregen|enduranceregen|classes|races|deity|skillmodvalue|skillmodmax|skillmodtype|skillmodextra|banedmgrace|banedmgbody|banedmgraceamt|banedmgamt|magic|foodduration|reqlevel|reclevel|reqskill|bardtype|bardvalue|UNKNOWN02|UNKNOWN03|UNKNOWN04|light|delay|elemdmgtype|elemdmgamt|therange|damage|color|prestige|UNKNOWN06|UNKNOWN07|UNKNOWN08|itemtype|material|materialunk1|elitematerial|heroforge1|heroforge2|sellrate|extradmgskill|extradmgamt|charmfileid|mounteffect|mountlevel2|mounteffecttype|mountlevel|mountunk1|mountunk2|mountunk3|mountunk4|charmfile|augtype|augstricthidden|augrestrict|augslot1type|augslot1visible|augslot1unk|augslot2type|augslot2visible|augslot2unk|augslot3type|augslot3visible|augslot3unk|augslot4type|augslot4visible|augslot4unk|augslot5type|augslot5visible|augslot5unk|augslot6type|augslot6visible|augslot6unk|pointtype|ldontheme|ldonprice|ldonsellbackrate|ldonsold|bagtype|bagslots|bagsize|bagwr|booktype|booklang|filename|loregroup|artifactflag|summonedflag|favor|fvnodrop|attack|haste|guildfavor|augdistiller|UNKNOWN09|UNKNOWN10|nopet|UNKNOWN11|stacksize|notransfer|expendablearrow|UNKNOWN12|UNKNOWN13|clickeffect|clicklevel2|clicktype|clicklevel|maxcharges|casttime|recastdelay|recasttype|clickunk5|clickname|clickunk7|proceffect|proclevel2|proctype|proclevel|prockunk1|procunk2|procunk3|procunk4|procrate|procname|procunk7|worneffect|wornlevel2|worntype|wornlevel|wornunk1|wornunk2|wornunk3|wornunk4|wornunk5|wornname|wornunk7|focuseffect|focuslevel2|focustype|focuslevel|focusunk1|focusunk2|focusunk3|focusunk4|focusunk5|focusname|focusunk7|scrolleffect|scrolllevel2|scrolleffecttype|scrolllevel|scrollunk1|scrollunk2|scrollunk3|scrollunk4|scrollunk5|scrollname|scrollunk7|bardeffect|bardlevel2|bardeffecttype|bardlevel|bardunk1|bardunk2|bardunk3|bardunk4|bardunk5|bardname|bardunk7|mountunk5|blessingeffect|blessingname|mountname|mountunk7|blessinglevel2|blessingeffecttype|blessinglevel|blessingunk1|rightclickscriptid|questitemflag|powersourcecap|purity|epicitem|backstabdmg|heroic_str|heroic_int|heroic_wis|heroic_agi|heroic_dex|heroic_sta|heroic_cha|UNKNOWN29|healamt|spelldmg|clairvoyance|UNKNOWN30|UNKNOWN31|UNKNOWN32|UNKNOWN33|UNKNOWN34|UNKNOWN35|UNKNOWN36|UNKNOWN37|heirloom|placeablebitfield|UNKNOWN38|UNKNOWN39|UNKNOWN40|UNKNOWN41|UNKNOWN42|UNKNOWN43|UNKNOWN44|placeablenpcname|UNKNOWN46|UNKNOWN47|UNKNOWN48|UNKNOWN49|UNKNOWN50|UNKNOWN51|UNKNOWN52|UNKNOWN53|UNKNOWN54|UNKNOWN55|UNKNOWN56|UNKNOWN57|UNKNOWN58|UNKNOWN59|UNKNOWN60|UNKNOWN61|UNKNOWN62|UNKNOWN63|collectible|nodestroy|nonpc|nozone|UNKNOWN68|UNKNOWN69|UNKNOWN70|UNKNOWN71|noground|UNKNOWN73|marketplace|freestorage|UNKNOWN76|UNKNOWN77|UNKNOWN78|UNKNOWN79|blessingunk2|blessingunk3|blessingunk4|blessingunk5|blessingunk7|familiareffect|familiarlevel2|familiareffecttype|familiarlevel|familiarunk1|familiarunk2|familiarunk3|familiarunk4|familiarunk5|familiarname|familiarunk7|UNKNOWN80|minluck|maxluck|loreequippedgroup|evoitem|evoid|evolvl|evomax|convertitem|convertid|convertname|updated|created|submitter|verified|verifiedby|collectversion"
-	f, err := os.Create("/tmp/dat2")
+	f, err := os.Create(out)
 	if err != nil {
 		return err
 	}

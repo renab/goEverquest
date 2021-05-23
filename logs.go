@@ -68,13 +68,12 @@ func readLogLine(results [][]string) *EqLog {
 
 func eqTimeConv(t string) time.Time {
 	// Get local time zone
-	localT := time.Now()
-	zone, _ := localT.Zone()
+	zone, _ := time.Now().Zone()
 
 	// Parse Time
 	cTime, err := time.Parse("Mon Jan 02 15:04:05 2006 MST", t+" "+zone)
 	if err != nil {
-		fmt.Printf("Error parsing time, defaulting to now: %s\n", err.Error())
+		// fmt.Printf("Error parsing time, defaulting to now: %s\n", err.Error())
 		cTime = time.Now()
 	}
 	return cTime
