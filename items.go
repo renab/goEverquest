@@ -2098,3 +2098,81 @@ type Item struct {
 	Verifiedby         string    `db:"verifiedby"`
 	Collectversion     string    `db:"collectversion"`
 }
+
+func (i *Item) GetClasses() []string {
+	var classes []string
+	total := i.Classes
+	if total == 65535 {
+		return []string{"Berserker", "Beastlord", "Enchanter", "Magician", "Wizard", "Necromancer", "Shaman", "Rogue", "Bard", "Monk", "Druid", "Shadow Knight", "Ranger", "Paladin", "Cleric", "Warrior"}
+	}
+	if total-32768 >= 0 {
+		classes = append(classes, "Berserker")
+		total -= 32768
+	}
+	if total-16384 >= 0 {
+		classes = append(classes, "Beastlord")
+		total -= 16384
+	}
+	if total-8192 >= 0 {
+		classes = append(classes, "Enchanter")
+		total -= 8192
+	}
+	if total-4096 >= 0 {
+		classes = append(classes, "Magician")
+		total -= 4096
+	}
+	if total-2048 >= 0 {
+		classes = append(classes, "Wizard")
+		total -= 2048
+	}
+	if total-1024 >= 0 {
+		classes = append(classes, "Necromancer")
+		total -= 1024
+	}
+	if total-512 >= 0 {
+		classes = append(classes, "Shaman")
+		total -= 512
+	}
+	if total-256 >= 0 {
+		classes = append(classes, "Rogue")
+		total -= 256
+	}
+	if total-128 >= 0 {
+		classes = append(classes, "Bard")
+		total -= 128
+	}
+	if total-64 >= 0 {
+		classes = append(classes, "Monk")
+		total -= 64
+	}
+
+	if total-32 >= 0 {
+		classes = append(classes, "Druid")
+		total -= 32
+	}
+
+	if total-16 >= 0 {
+		classes = append(classes, "Shadow Knight")
+		total -= 16
+	}
+
+	if total-8 >= 0 {
+		classes = append(classes, "Ranger")
+		total -= 8
+	}
+
+	if total-4 >= 0 {
+		classes = append(classes, "Paladin")
+		total -= 4
+	}
+
+	if total-2 >= 0 {
+		classes = append(classes, "Cleric")
+		total -= 2
+	}
+	if total-1 >= 0 {
+		classes = append(classes, "Warrior")
+		total -= 1
+	}
+	return classes
+}
