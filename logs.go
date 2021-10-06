@@ -103,7 +103,7 @@ func getChannel(msg string) string {
 			return "tell"
 		}
 	}
-	if len(m) > 2 && m[1] == "tells" && strings.Contains(m[2], ":") { // channel message
+	if len(m) > 2 && (m[1] == "tells" || m[1] == "tell") && strings.Contains(m[2], ":") { // channel message
 		// return m[3]
 		colLoc := strings.Index(m[2], ":")
 		return m[2][:colLoc]
