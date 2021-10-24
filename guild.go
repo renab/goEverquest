@@ -63,6 +63,7 @@ func (guild *Guild) LoadFromPath(path string, Err *log.Logger) error {
 		Err.Println("Couldn't open the tsv file", err)
 		return errors.New("could not open the tsv file at " + path)
 	}
+	defer tsvfile.Close()
 
 	// Parse the file
 	r := csv.NewReader(tsvfile)
