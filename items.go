@@ -2187,6 +2187,6 @@ func (db *ItemDB) AddItem(item Item) error {
 		return errors.New("Item ID must be valid")
 	}
 	db.items[item.ID] = item
-	db.names[item.Name] = item.ID
+	db.names[strings.ToLower(item.Name)] = item.ID
 	return nil
 }
