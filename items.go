@@ -2099,6 +2099,7 @@ type Item struct {
 	Collectversion     string    `db:"collectversion"`
 }
 
+// GetClasses returns a list of all classes usable by the item
 func (i *Item) GetClasses() []string {
 	var classes []string
 	total := i.Classes
@@ -2175,4 +2176,17 @@ func (i *Item) GetClasses() []string {
 		total -= 1
 	}
 	return classes
+}
+
+// AddItem is for adding new items not loaded via csv
+func (db *ItemDB) AddItem(item Item) error {
+	if item.Name == "" {
+		return errors.New("Item name cannot be empty")
+	}
+	if item.ID <= 0 {
+		return errors.New("Item ID must be valid")
+	}
+	db.items[item.ID] = item
+	db.names[item.Name] = item.ID
+	return nil
 }
