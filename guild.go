@@ -221,7 +221,7 @@ func (guild *Guild) WriteToPath(path string) error {
 	}
 
 	datawriter := bufio.NewWriter(file)
-	defer datawriter.Flush()
+	// defer datawriter.Flush()
 	defer file.Close()
 
 	for _, member := range guild.Members {
@@ -248,6 +248,7 @@ func (guild *Guild) WriteToPath(path string) error {
 		if err != nil {
 			return err
 		}
+		datawriter.Flush()
 	}
 	return nil
 }
