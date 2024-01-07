@@ -68,6 +68,7 @@ func (guild *Guild) LoadFromPath(path string, Err *log.Logger) error {
 	// Parse the file
 	r := csv.NewReader(tsvfile)
 	r.Comma = '\t'
+	r.LazyQuotes = true
 
 	// Iterate through the records
 	for {
